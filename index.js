@@ -9,9 +9,10 @@ import Clientpost from './routers/clientPostRoutes.js'
 import adminclientrouter from './routers/adminClientRoute.js';
 import txtrouter from './routers/supportTicketRoute.js';
 import adminRouter from './adminRoutes/adminRouter.js';
+import orderRouter from './orderRoutes/rentalOrderRoutes.js'
 import path from 'path';
 import { fileURLToPath } from 'url';
-
+import paymentRouter from "./orderRoutes/paymentRoutes.js"
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -24,7 +25,7 @@ app.use(cookieParser());
 
 // Allow all origins
 app.use(cors({
-  origin: 'http://localhost:5173', 
+  origin: 'https://rentoora.bhishansah.com.np', 
   credentials: true,
 }));
 
@@ -52,5 +53,7 @@ app.use('/count', adminclientrouter);
 app.use('/api', Clientpost);
 app.use('/txt', txtrouter);
 app.use('/admin', adminRouter);
+app.use('/order', orderRouter);
+app.use('/payment', paymentRouter);
 
 export default app;

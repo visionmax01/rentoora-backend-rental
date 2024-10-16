@@ -1,8 +1,9 @@
 import express from 'express';
 import { register, login, getUserData, logout, updateUserDetails, updateProfilePic,changePassword } from '../controllers/authController.js';
+import { sendOTP, verifyOTP, resetPassword } from '../controllers/resetPassword.js';
 import upload from '../middleware/uploadClientDocuments.js';
 import auth, { requireAdmin } from '../middleware/auth.js';
-import  {authMiddleware}  from '../middleware/authMiddleware.js';
+import  authenticateToken  from '../middleware/authenticateToken.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,10 +20,10 @@ Clientrouter.post('/register', upload.fields([
 
 Clientrouter.post('/update-profile-pic', upload.single('profilePic'), updateProfilePic);
 Clientrouter.post('/login', login);
-Clientrouter.post('/change-password', authMiddleware, changePassword);
+Clientrouter.post('/change-password', authenticateToken, changePassword);
 
 
-Clientrouter.get('/profile', authMiddleware, getUserData, async (req, res) => {
+Clientrouter.get('/profile', authenticateToken, getUserData, async (req, res) => {
   try {
     const user = await user.findById(req.user); 
     if (!user) {
@@ -37,14 +38,18 @@ Clientrouter.get('/profile', authMiddleware, getUserData, async (req, res) => {
   }
 });
 
-Clientrouter.put('/update-user-details', authMiddleware, updateUserDetails);
+Clientrouter.put('/update-user-details', authenticateToken, updateUserDetails);
 
 Clientrouter.get('/admin-dashboard', auth, requireAdmin, (req, res) => {
  //code here
 });
 
-Clientrouter.get('/user-data', authMiddleware, getUserData);
-Clientrouter.post('/logout', authMiddleware, logout);
+Clientrouter.get('/user-data', authenticateToken, getUserData);
+Clientrouter.post('/logout', authenticateToken, logout);
+
+Clientrouter.post('/send-otp', sendOTP);
+Clientrouter.post('/verify-otp', verifyOTP);
+Clientrouter.post('/reset-password', resetPassword);
 
 export default Clientrouter;
 

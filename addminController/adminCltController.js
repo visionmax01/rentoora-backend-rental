@@ -2,12 +2,14 @@ import User from '../models/clientadModel.js'; // Adjust the import based on you
 import ClientPost from '../models/clientPost.js'
 import RentalPost from '../models/rentalPostModel.js';
 import fs from 'fs';
-import path from 'path';
+import path, {dirname} from 'path';
+
+
 // Controller to get all clients (users with role 0)
 export const getAllClients = async (req, res) => {
   try {
     const clients = await User.find({ role: 0 }).select(
-      'name email phoneNo dateOfBirth address accountId profilePhotoPath citizenshipImagePath role'
+      'name email phoneNo dateOfBirth province district municipality accountId profilePhotoPath citizenshipImagePath role'
     );
     
     if (!clients || clients.length === 0) {
@@ -42,35 +44,73 @@ export const deleteClient = async (req, res) => {
 
 
 
-
 // Controller function for updating client details
+
+import jwt from 'jsonwebtoken';
+import { fileURLToPath } from 'url';
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 export const updateClient = async (req, res) => {
-  const { clientId } = req.params;
-  const { dateOfBirth, name, email, phoneNo, address } = req.body;
-  const citizenshipImage = req.files?.citizenshipImage?.[0]?.path; // Path to uploaded citizenship image
+  const { accountId } = req.params;
+  const { dateOfBirth, name, email, phoneNo, province, district, municipality } = req.body;
 
   try {
-    // Find the client by ID and update the relevant fields
-    const updatedClient = await User.findByIdAndUpdate(
-      clientId,
-      {
-        dateOfBirth,
-        name,
-        email,
-        phoneNo,
-        address,
-        ...(citizenshipImage && { citizenshipImage }), // Update citizenshipImage if it was uploaded
-      },
-      { new: true } // Return the updated document
-    );
+    // Extract token from headers
+    const token = req.headers.authorization?.split(' ')[1]; // Assuming Bearer token
 
-    if (!updatedClient) {
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided.' });
+    }
+
+    // Verify and decode the token to get user ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id; // Adjust according to how your token is structured
+
+    // Find the existing client to get the current citizenship image
+    const existingClient = await User.findOne({ accountId });
+    
+    // If client does not exist, return an error
+    if (!existingClient) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
-    res.status(200).json({ message: "Client updated successfully", updatedClient });
+    // Get the citizenship image path if a new file was uploaded
+    const newCitizenshipImage = req.files?.citizenshipImage?.[0]?.filename; // Use the filename stored by multer
+    const citizenshipImagePath = newCitizenshipImage 
+      ? path.join('public/ClientDocuments', newCitizenshipImage) 
+      : existingClient.citizenshipImagePath; // Use new image or retain existing
+
+    // If a new image was uploaded, delete the old image
+    if (newCitizenshipImage) {
+      const oldImagePath = path.join(__dirname, existingClient.citizenshipImagePath); // Correct path here
+      console.log("Attempting to delete file at:", oldImagePath); // Log the file path
+
+      if (fs.existsSync(oldImagePath)) {
+        console.log("Deleting old citizenship image:", oldImagePath);
+        fs.unlinkSync(oldImagePath); // Synchronously delete the old image
+      } else {
+        console.log("File not found, skipping deletion:", oldImagePath);
+      }
+    }
+
+    // Update client details
+    existingClient.dateOfBirth = dateOfBirth;
+    existingClient.name = name;
+    existingClient.email = email;
+    existingClient.phoneNo = phoneNo;
+    existingClient.province = province;
+    existingClient.district = district;
+    existingClient.municipality = municipality;
+    existingClient.citizenshipImagePath = citizenshipImagePath; // Update the citizenshipImagePath
+
+    await existingClient.save(); // Save the updated client
+
+    res.status(200).json({ message: "Client updated successfully", updatedClient: existingClient });
   } catch (error) {
-    console.error("Error updating client details:", error); // Log the error for debugging
+    console.error("Error updating client details:", error);
     res.status(500).json({ message: "Error updating client details", error: error.message });
   }
 };
@@ -78,16 +118,6 @@ export const updateClient = async (req, res) => {
 
 
 
-
-
-
-
-
-
-// Get all posts with associated client information
-
-
-// Get all client posts (Admin only)
 
 
 // Controller to get all client posts

@@ -10,7 +10,11 @@ const userSchema = new mongoose.Schema({
   citizenshipImagePath: { type: String },
   phoneNo: { type: String },
   dateOfBirth: { type: Date },
-  address: { type: String }
+  province: { type: String },
+  district: { type: String },
+  municipality: { type: String },
+  otp: { type: String }, // Add OTP field
+  otpExpiry: { type: Date } // Add OTP expiry field
 }, { timestamps: true }); // Add this line to include timestamps
 
 // Middleware to format the date before saving

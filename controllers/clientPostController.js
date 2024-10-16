@@ -3,42 +3,50 @@ import RentalPost from '../models/rentalPostModel.js';
 import fs from 'fs';
 import path from 'path';
 
+
 export const createClientPost = async (req, res) => {
   try {
-    const { type, description, price } = req.body;
-    const userId = req.userId;
+      const { type, description, price, province, district, municipality, landmark } = req.body;
+      const userId = req.userId;
 
-    if (!type || !description || !price || isNaN(price)) {
-      return res
-        .status(400)
-        .json({ message: 'Please fill out all fields correctly.' });
-    }
+      // Validate input fields
+      if (!type || !description || !price || !province || !district || !municipality || isNaN(price)) {
+          return res.status(400).json({ message: 'Please fill out all fields correctly.' });
+      }
 
-    const images = req.files.map((file) =>
-      path.join('public/RoomFolder', file.filename)
-    );
+      // Log incoming files
+      console.log('Files received:', req.files);
 
-    const newPost = new RentalPost({
-      clientId: userId,
-      postType: type,
-      description,
-      price,
-      images,
-    });
+      const images = req.files.map((file) => path.join('public/RoomFolder', file.filename));
+      const newPost = new RentalPost({
+          clientId: userId,
+          postType: type,
+          description,
+          price,
+          address: {
+              province,
+              district,
+              municipality,
+              landmark,
+          },
+          images,
+          status: 'not booked', // Set a default status
+      });
 
-    await newPost.save();
-
-    res.status(201).json({ message: 'Post created successfully', post: newPost });
+      await newPost.save();
+      res.status(201).json({ message: 'Post created successfully', post: newPost });
   } catch (error) {
-    console.error('Error creating post:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
+      console.error('Error creating post:', error); // Log the full error
+      res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+
 
 // Update a post
 export const updateClientPost = async (req, res) => {
   try {
-    const { type, description, price } = req.body;
+    const { type, description, price, landmark } = req.body;  // Extract landmark
     const userId = req.userId;
     const postId = req.params.id;
 
@@ -57,6 +65,7 @@ export const updateClientPost = async (req, res) => {
     post.postType = type || post.postType;
     post.description = description || post.description;
     post.price = price || post.price;
+    post.address.landmark = landmark || post.address.landmark;  // Update landmark
 
     // If new images are uploaded, replace the old images
     if (req.files && req.files.length > 0) {
@@ -85,6 +94,7 @@ export const updateClientPost = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 
 export const getClientPosts = async (req, res) => {
