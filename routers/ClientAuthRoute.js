@@ -44,7 +44,7 @@ Clientrouter.get('/admin-dashboard', auth, requireAdmin, (req, res) => {
  //code here
 });
 
-Clientrouter.get('/user-data', authenticateToken, getUserData);
+Clientrouter.get('/user-data', getUserData);
 Clientrouter.post('/logout', authenticateToken, logout);
 
 Clientrouter.post('/send-otp', sendOTP);
