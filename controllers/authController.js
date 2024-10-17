@@ -182,7 +182,7 @@ export const getUserData = async (req, res) => {
       profilePic: user.profilePhotoPath,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching user data' });
+      res.status(500).send('Error fetching user data');
   }
 };
 
