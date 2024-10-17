@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "build": "npm i"
+    "build": "npm install"
   },
   "keywords": [],
   "author": "",
