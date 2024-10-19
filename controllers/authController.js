@@ -5,7 +5,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-
+import cloudinary from 'cloudinary';
 dotenv.config();
 
 // Function to generate a random password
@@ -18,13 +18,13 @@ const generateRandomPassword = () => {
   return password;
 };
 
-// Generate Account ID
+// Generate Account_ID
 const generateAccountId = (firstName) => {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
   return `${firstName}${randomNum}`;
 };
 
-// Nodemailer configuration
+// Nodemailer configuration for email sending
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
   auth: {
@@ -33,7 +33,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Register controller function
+// Register to controll registration
 export const register = async (req, res) => {
   try {
     const { name, email, role, phoneNo, dateOfBirth, province, district, municipality } = req.body;
@@ -88,7 +88,7 @@ export const register = async (req, res) => {
   }
 };
 
-// Change password controller function
+//controller function for Change password 
 export const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
@@ -117,7 +117,7 @@ export const changePassword = async (req, res) => {
   }
 };
 
-// Login controller function
+//function to controller  Login  
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -125,14 +125,12 @@ export const login = async (req, res) => {
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      console.log('User not found');
       return res.status(404).json({ message: 'User not found' });
     }
 
     // Check if the password is correct
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      console.log('Invalid password');
       return res.status(400).json({ message: 'Invalid password' });
     }
 
@@ -140,12 +138,8 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { email: user.email, id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' } // Adjust the expiration time as needed
+      { expiresIn: '1h' } 
     );
-
-    // Log what the backend is sending
-    console.log('User authenticated:', { userId: user._id, token });
-
     // Send the response
     res.status(200).json({
       result: {
@@ -158,7 +152,6 @@ export const login = async (req, res) => {
       redirectUrl: user.role === 1 ? '/admin-dashboard' : '/',
     });
   } catch (error) {
-    console.log('Server error:', error);
     res.status(500).json({ message: 'Something went wrong' });
   }
 };
@@ -169,17 +162,14 @@ export const login = async (req, res) => {
 export const getUserData = async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('name email role accountId profilePhotoPath citizenshipImagePath phoneNo dateOfBirth province district municipality');
-
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Debugging: Log the user data to see if the correct details are fetched
-    console.log("Fetched User Data: ", user);
-
     res.json({
       ...user._doc,
-      profilePic: user.profilePhotoPath,
+      profilePhotoPath: user.profilePhotoPath,
+      citizenshipImagePath: user.citizenshipImagePath,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching user data' });
@@ -194,6 +184,8 @@ export const logout = async (req, res) => {
     res.status(500).json({ message: 'Error logging out' });
   }
 };
+
+
 
 // Update user details controller function
 export const updateUserDetails = async (req, res) => {
@@ -225,14 +217,18 @@ export const updateUserDetails = async (req, res) => {
   }
 };
 
+
+
 // Update profile picture controller function
+
+
+
 export const updateProfilePic = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
 
-    // Extract token from headers
     const token = req.headers.authorization?.split(' ')[1]; // Assuming Bearer token
 
     if (!token) {
@@ -240,40 +236,34 @@ export const updateProfilePic = async (req, res) => {
     }
 
     // Verify and decode the token to get user ID
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Make sure JWT_SECRET is correctly set in your environment
-    const userId = decoded.id; // Adjust according to how your token is structured
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded._id;
 
-    const profilePicPath = path.join('public/ClientDocuments', req.file.filename);
-
-    // Find the user and update their profile picture path
+    // Find the user
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    // Debugging: Log the old profile picture path
-    console.log('Old profile picture path:', user.profilePhotoPath);
-
+    // Delete the old profile picture from Cloudinary if it exists
     if (user.profilePhotoPath) {
-      const oldProfilePicPath = path.join('', user.profilePhotoPath);
-
-      if (fs.existsSync(oldProfilePicPath)) {
-        console.log('Deleting file:', oldProfilePicPath);
-        fs.unlinkSync(oldProfilePicPath);
-      } else {
-        console.log('File does not exist, skipping deletion:', oldProfilePicPath);
-      }
+      const oldPublicId = user.profilePhotoPath.split('/').pop().split('.')[0]; // Get the public ID
+      await cloudinary.v2.uploader.destroy(oldPublicId, { invalidate: true });
     }
 
-    // Update the user's profile picture path
-    user.profilePhotoPath = profilePicPath;
+    // Upload the new profile picture to Cloudinary
+    const uploadResult = await cloudinary.v2.uploader.upload(req.file.path, {
+      folder: 'ClientDocuments/profilePhoto', 
+    });
+    user.profilePhotoPath = uploadResult.secure_url;
     await user.save();
 
-    res.status(200).json({ message: 'Profile picture updated successfully.' });
+    res.status(200).json({ message: 'Profile picture updated successfully.', profilePhotoPath: user.profilePhotoPath });
   } catch (error) {
     res.status(500).json({ message: 'Error updating profile picture.', error: error.message });
   }
 };
+
 
 // Update citizenship image controller function
 export const updateCitizenshipImage = async (req, res) => {
@@ -291,7 +281,7 @@ export const updateCitizenshipImage = async (req, res) => {
 
     // Verify and decode the token to get user ID
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id; // Adjust according to how your token is structured
+    const userId = decoded.id; 
 
     const citizenshipImagePath = path.join('public/ClientDocuments', req.file.filename);
 
@@ -300,10 +290,6 @@ export const updateCitizenshipImage = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
-
-    // Debugging: Log the old citizenship image path
-    console.log('Old citizenship image path:', user.citizenshipImagePath);
-
     if (user.citizenshipImagePath) {
       const oldCitizenshipImagePath = path.join('', user.citizenshipImagePath);
 
@@ -314,7 +300,6 @@ export const updateCitizenshipImage = async (req, res) => {
         console.log('File does not exist, skipping deletion:', oldCitizenshipImagePath);
       }
     }
-
     // Update the user's citizenship image path
     user.citizenshipImagePath = citizenshipImagePath;
     await user.save();

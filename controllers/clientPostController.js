@@ -6,40 +6,41 @@ import path from 'path';
 
 export const createClientPost = async (req, res) => {
   try {
-      const { type, description, price, province, district, municipality, landmark } = req.body;
-      const userId = req.userId;
+    const { type, description, price, province, district, municipality, landmark } = req.body;
+    const userId = req.userId;
 
-      // Validate input fields
-      if (!type || !description || !price || !province || !district || !municipality || isNaN(price)) {
-          return res.status(400).json({ message: 'Please fill out all fields correctly.' });
-      }
+    // Validate input fields
+    if (!type || !description || !price || !province || !district || !municipality || isNaN(price)) {
+      return res.status(400).json({ message: 'Please fill out all fields correctly.' });
+    }
 
-      // Log incoming files
-      console.log('Files received:', req.files);
+    // Extract Cloudinary URLs
+    const images = req.files.map(file => file.path);
 
-      const images = req.files.map((file) => path.join('public/RoomFolder', file.filename));
-      const newPost = new RentalPost({
-          clientId: userId,
-          postType: type,
-          description,
-          price,
-          address: {
-              province,
-              district,
-              municipality,
-              landmark,
-          },
-          images,
-          status: 'not booked', // Set a default status
-      });
+    const newPost = new RentalPost({
+      clientId: userId,
+      postType: type,
+      description,
+      price,
+      address: {
+        province,
+        district,
+        municipality,
+        landmark,
+      },
+      images, // Use Cloudinary URLs
+      status: 'not booked',
+    });
 
-      await newPost.save();
-      res.status(201).json({ message: 'Post created successfully', post: newPost });
+    await newPost.save();
+    res.status(201).json({ message: 'Post created successfully', post: newPost });
   } catch (error) {
-      console.error('Error creating post:', error); // Log the full error
-      res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error creating post:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+
 
 
 

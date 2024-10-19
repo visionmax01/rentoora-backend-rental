@@ -9,18 +9,22 @@ const authenticateToken = (req, res, next) => {
         return res.status(401).json({ message: 'Authentication token missing' });
     }
 
-    console.log("Received token:", token); // Debugging log
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
-            console.error("Token verification failed:", err);
-            return res.status(403).json({ message: 'Token verification failed please Login' });
+            // Check for token expiration specifically
+            if (err.name === 'TokenExpiredError') {
+                return res.status(403).json({ message: 'Token expired, please log in again.' });
+            }
+            
+            // For other JWT errors
+            return res.status(403).json({ message: 'Token verification failed, please log in.' });
         }
+        
         req.user = decoded;
-        req.userId = decoded.id;
+        req.userId = decoded.id; // Assuming 'id' is part of the decoded token
         next();
     });
 };
-
 
 export default authenticateToken;

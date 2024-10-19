@@ -4,11 +4,7 @@ import { sendOTP, verifyOTP, resetPassword } from '../controllers/resetPassword.
 import upload from '../middleware/uploadClientDocuments.js';
 import auth, { requireAdmin } from '../middleware/auth.js';
 import  authenticateToken  from '../middleware/authenticateToken.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 
 const Clientrouter = express.Router();
@@ -44,7 +40,7 @@ Clientrouter.get('/admin-dashboard', auth, requireAdmin, (req, res) => {
  //code here
 });
 
-Clientrouter.get('/user-data', getUserData);
+Clientrouter.get('/user-data',authenticateToken, getUserData);
 Clientrouter.post('/logout', authenticateToken, logout);
 
 Clientrouter.post('/send-otp', sendOTP);

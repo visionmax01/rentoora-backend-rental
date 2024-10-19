@@ -1,8 +1,10 @@
 import User from '../models/clientadModel.js'; // Adjust the import based on your project structure
-import ClientPost from '../models/clientPost.js'
 import RentalPost from '../models/rentalPostModel.js';
 import fs from 'fs';
 import path, {dirname} from 'path';
+import jwt from 'jsonwebtoken';
+import { fileURLToPath } from 'url';
+import cloudinary from 'cloudinary'; // Make sure to import cloudinary
 
 
 // Controller to get all clients (users with role 0)
@@ -24,30 +26,55 @@ export const getAllClients = async (req, res) => {
 
 
 
-// Controller to delete a client
+
+
+// Delete a client and associated images
 export const deleteClient = async (req, res) => {
   try {
     const { accountId } = req.params;
 
+    // Find the client by accountId
     const client = await User.findOneAndDelete({ accountId });
 
     if (!client) {
-      return res.status(404).json({ message: 'Client not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    res.status(200).json({ message: 'Client deleted successfully' });
+    // Delete associated images (profile photo and citizenship image)
+    const imagesToDelete = [client.profilePhotoPath, client.citizenshipImagePath];
+
+    imagesToDelete.forEach((imagePath) => {
+      if (imagePath) {
+        const fullPath = path.resolve(imagePath);
+        console.log(`Attempting to delete: ${fullPath}`);
+
+        fs.unlink(fullPath, (err) => {
+          if (err) {
+            console.error(`Error deleting image: ${fullPath}`, err);
+          } else {
+            console.log(`Successfully deleted: ${fullPath}`);
+          }
+        });
+      }
+    });
+
+    return res.status(200).json({ message: 'Client and associated images deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting client', error: error.message });
+    console.error('Error in deleteClient:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
 
 
 
+
+
+
+
 // Controller function for updating client details
 
-import jwt from 'jsonwebtoken';
-import { fileURLToPath } from 'url';
+
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -194,6 +221,9 @@ export const updateClientPostByAdmin = async (req, res) => {
   }
 };
 
+
+
+
 // Delete a client post (Admin only)
 export const deleteClientPostByAdmin = async (req, res) => {
   try {
@@ -205,17 +235,17 @@ export const deleteClientPostByAdmin = async (req, res) => {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Delete associated images
-    post.images.forEach((imagePath) => {
-      const fullPath = path.resolve(imagePath);
-      fs.unlink(fullPath, (err) => {
-        if (err) {
-          console.error(`Error deleting image: ${fullPath}`, err);
-        } else {
-          console.log(`Successfully deleted: ${fullPath}`);
-        }
-      });
-    });
+    // Delete associated images from Cloudinary
+    await Promise.all(post.images.map(async (image) => {
+      const publicId = image.split('/').slice(-2).join('/').replace(/\.[^/.]+$/, ""); // Extract public ID correctly
+      console.log(`Attempting to delete image with public ID: ${publicId}`);
+      try {
+        await cloudinary.v2.uploader.destroy(publicId); // Delete image from Cloudinary
+        console.log(`Successfully deleted image from Cloudinary: ${publicId}`);
+      } catch (err) {
+        console.error(`Error deleting image from Cloudinary: ${publicId}`, err);
+      }
+    }));
 
     // Delete the post
     await RentalPost.deleteOne({ _id: postId });

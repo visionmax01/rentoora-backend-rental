@@ -16,7 +16,7 @@ import upload from '../middleware/uploadClientDocuments.js'; // Corrected import
 const adminRouter = express.Router();
 
 // Route for admin to get all clients
-adminRouter.get('/all-clients', getAllClients);
+adminRouter.get('/all-clients', authMiddleware, adminMiddleware, getAllClients);
 
 // Route to delete a client
 adminRouter.delete('/delete-client/:accountId', authMiddleware, adminMiddleware, deleteClient);

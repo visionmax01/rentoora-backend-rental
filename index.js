@@ -10,11 +10,8 @@ import adminclientrouter from './routers/adminClientRoute.js';
 import txtrouter from './routers/supportTicketRoute.js';
 import adminRouter from './adminRoutes/adminRouter.js';
 import orderRouter from './orderRoutes/rentalOrderRoutes.js'
-import path from 'path';
 import { fileURLToPath } from 'url';
 import paymentRouter from "./orderRoutes/paymentRoutes.js"
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -25,11 +22,10 @@ app.use(cookieParser());
 
 // Allow all origins
 app.use(cors({
-  origin: 'https://rentoora.bhishansah.com.np', 
+  origin: 'http://localhost:5173', 
   credentials: true,
 }));
 
-app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Connect to MongoDB
 const PORT = process.env.PORT || 8000;
