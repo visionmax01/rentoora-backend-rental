@@ -172,7 +172,7 @@ export const getUserData = async (req, res) => {
       citizenshipImagePath: user.citizenshipImagePath,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching user data' });
+      console.error("Error fetching user data:", error);
   }
 };
 
