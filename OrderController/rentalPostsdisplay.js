@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer'; 
 import dotenv from 'dotenv'; 
 
+
 // Load environment variables
 dotenv.config();
 
@@ -85,49 +86,59 @@ export const createOrder = async (req, res) => {
 
         await newOrder.save();
 
-        // Email template for the post owner
+        // Construct full address from the post's address
+        const fullAddress = `${post.address.province}, ${post.address.district}, ${post.address.municipality}${post.address.landmark ? ', ' + post.address.landmark : ''}`;
+
+        // HTML email template for the post owner
         const ownerMailOptions = {
             from: process.env.EMAIL_USERNAME,
             to: post.clientId.email,
             subject: 'Your Rental Post Has Been Booked - Rentoora',
-            text: `Dear ${post.clientId.name},
+            html: `
+     <div style="border: 2px solid gray; border-radius:15px; padding:5px 5px 10px 30px; font-family: Arial, sans-serif; color: #333;">
+    <h2 style="color: #4CAF50;">Dear ${post.clientId.name},</h2>
+    <p>Congratulations! Your rental post of <strong>${post.postType}</strong> has been  booked by ${user.name}.</p>
+    <p><strong>Booking Details:</strong></p>
+    <ul>
+        <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
+        <li><strong>User Name:</strong> ${user.name}</li>
+        <li><strong>Account ID:</strong> ${user.accountId}</li>
+        <li><strong>Rental Post:</strong> ${post.postType}</li>
+        <li><strong>Price:</strong> Rs.${post.price}</li>
+        <li><strong>Mode of Payment:</strong> ${newOrder.paymentMethod}</li>
+        <li><strong>Location:</strong> ${fullAddress}</li>
 
-Your rental post (${post.postType}) has been booked by ${user.name} (Account ID: ${user.accountId}). Below are the booking details:
-
-Booking ID: ${newOrder.orderId}
-User Name: ${user.name}
-Account ID: ${user.accountId}
-Rental Post: ${post.postType}
-Location: ${post.location}
-Price: Rs.${post.price}
-
-Please note that the booking status is now updated to "Booked".
-
-Best regards,
-The Rentoora Team`,
+    </ul>
+    <p>Your rental post status has been updated to "Booked".</p>
+    <p>If you have any questions, feel free to contact us.</p>
+    <p>Best regards,<br>The Rentoora Team</p>
+</div>
+            `,
         };
 
-        // Email template for the user
+        // HTML email template for the user
         const userMailOptions = {
             from: process.env.EMAIL_USERNAME,
             to: user.email,
             subject: 'Booking Confirmation - Rentoora',
-            text: `Dear ${user.name},
+            html: `
+          
 
-Thank you for your booking!
-
-Your booking for the rental post (${post.postType}) has been confirmed. Below are the details:
-
-Booking ID: ${newOrder.orderId}
-Rental Post: ${post.postType}
-Location: ${post.location}
-Price: Rs.${post.price}
-Payment Method: ${newOrder.paymentMethod}
-
-If you have any questions, feel free to contact us.
-
-Best regards,
-The Rentoora Team`,
+<div style="border: 2px solid gray; border-radius:15px; padding:5px 5px 10px 30px; font-family: Arial, sans-serif; color: #333;">
+    <h2 style="color: #4CAF50;">Dear ${user.name},</h2>
+    <p>Thank you for your booking! Your rental post <strong>${post.postType}</strong> has been confirmed.</p>
+    <p><strong>Booking Details:</strong></p>
+    <ul>
+        <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
+        <li><strong>Rental Post:</strong> ${post.postType}</li>
+        <li><strong>Price:</strong> Rs.${post.price}</li>
+        <li><strong>Payment Method:</strong> ${newOrder.paymentMethod}</li>
+        <li ><strong>Location:</strong> ${fullAddress}</li>
+    </ul>
+    <p>If you have any questions, feel free to contact us.</p>
+    <p>Best regards,<br>The Rentoora Team</p>
+</div>
+            `,
         };
 
         // Send emails
@@ -143,25 +154,31 @@ The Rentoora Team`,
 
 
 
-//order cancling
+
+
+//order canclation
 export const cancelOrder = async (req, res) => {
     const { orderId } = req.params;
     const { canceledById } = req.body; // Extract canceledById from the request body
 
     try {
-        // Find the order by ID and populate the related post
-        const order = await Order.findById(orderId).populate('postId');
+        // Find the order by ID and populate the related post and its clientId (owner of the post)
+        const order = await Order.findById(orderId).populate({
+            path: 'postId',
+            populate: { path: 'clientId' } // Populate the clientId to get the owner's details
+        });
+
         if (!order) return res.status(404).json({ message: 'Order not found.' });
 
-        // Fetch the user who is canceling the order
+        // Fetch the user who is canceling the order (the user making the cancellation)
         const cancelingUser = await User.findById(canceledById);
-        if (!cancelingUser) return res.status(404).json({ message: 'User not found.' });
+        if (!cancelingUser) return res.status(404).json({ message: 'Canceling user not found.' });
 
-        // Update order status and cancel details
+        // Update order status and cancellation details
         order.orderStatus = 'Order Canceled';
-        order.canceledBy = cancelingUser.name; // Store the name of the user who canceled the order
-        order.canceledById = canceledById; // Store the ID of the user who canceled the order
-        order.canceledAccountId = cancelingUser.accountId; // Store the account ID of the user who canceled the order
+        order.canceledBy = cancelingUser.name;
+        order.canceledById = canceledById;
+        order.canceledAccountId = cancelingUser.accountId;
 
         await order.save();
 
@@ -171,11 +188,69 @@ export const cancelOrder = async (req, res) => {
             await order.postId.save();
         }
 
-        res.status(200).json({ message: 'Order canceled successfully.' });
+        // Get the owner's email (owner of the post) from the populated clientId
+        const ownerEmail = order.postId.clientId.email;
+        const ownerName = order.postId.clientId.name;
+
+        // Get the email and name of the user who created the order
+        const orderCreator = await User.findById(order.userId); 
+        if (!orderCreator) return res.status(404).json({ message: 'Order creator not found.' });
+        const orderCreatorEmail = orderCreator.email;
+
+        // HTML email template for the post owner (who created the post)
+        const ownerMailOptions = {
+            from: process.env.EMAIL_USERNAME,
+            to: ownerEmail,
+            subject: 'Order Cancellation Notification - Rentoora',
+            html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+    <h2>Dear ${ownerName}, </h2>
+    <p>Your  rental post <strong>"${order.postId.postType}"</strong> has  canceled. Below are the details:</p>
+    <ul>
+        <li><strong>Order ID:</strong> ${order.orderId}</li>
+        <li><strong>Canceled By:</strong> ${cancelingUser.name}</li>
+        <li><strong>Canceled On:</strong> ${new Date(order.createdAt).toLocaleString()}</li>
+    </ul>
+    <p>If you have any questions or concerns, please contact us.</p>
+    <p>Best regards,<br>The Rentoora Team</p>
+</div>
+            `,
+        };
+
+        // HTML email template for the user who made the order
+        const userMailOptions = {
+            from: process.env.EMAIL_USERNAME,
+            to: orderCreatorEmail, // Email of the user who made the order
+            subject: 'Your Order Has Been Canceled - Rentoora',
+            html: `
+       <div style="font-family: Arial, sans-serif; color: #333;">
+    <h2>Dear ${orderCreator.name},</h2>
+    <p>We regret to inform you that the order for your rental post <strong>${order.postId.postType}</strong> has been canceled by ${cancelingUser.name}. Below are the details:</p>
+    <ul>
+        <li><strong>Order ID:</strong> ${order.orderId}</li>
+        <li><strong>Rental Post:</strong> ${order.postId.postType}</li>
+        <li><strong>Canceled By:</strong> ${cancelingUser.name}</li>
+        <li><strong>Canceled On:</strong> ${new Date(order.createdAt).toLocaleString()}</li>
+    </ul>
+    <p>If you have any questions or need further assistance, please feel free to contact us.</p>
+    <p>Best regards,<br>The Rentoora Team</p>
+</div>
+            `,
+        };
+
+        // Send emails to both the post owner and the user who made the order
+        await transporter.sendMail(ownerMailOptions);
+        await transporter.sendMail(userMailOptions);
+
+        res.status(200).json({ message: 'Order canceled successfully and notifications sent.' });
     } catch (error) {
+        console.error('Error while canceling order:', error); // Log the error for debugging
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+
+
 
 
 

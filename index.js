@@ -22,9 +22,10 @@ app.use(cookieParser());
 
 // Allow all origins
 app.use(cors({
-  origin: 'https://rentoora.bhishansah.com.np', 
+  origin: ['http://localhost:5173', 'https://rentoora.bhishansah.com.np'],
   credentials: true,
 }));
+
 
 
 // Connect to MongoDB

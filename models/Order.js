@@ -29,6 +29,11 @@ const orderSchema = new mongoose.Schema({
         enum: ['Wallet', 'Cash on Delivery'],
         required: true,
     },
+    paymentStatus: {
+        type: String,
+        enum: ['Paid', 'Not Paid'],
+        default: 'Not Paid', // Default status is 'Not Paid'
+    },
     orderStatus: {
         type: String,
         enum: ['Order Confirmed', 'Order Canceled'],
@@ -51,6 +56,15 @@ const orderSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
+
+orderSchema.pre('save', function (next) {
+    this.updatedAt = Date.now();
+    next();
 });
 
 const Order = mongoose.model('Order', orderSchema);

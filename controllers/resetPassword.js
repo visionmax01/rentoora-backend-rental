@@ -52,19 +52,20 @@ export const sendOTP = async (req, res) => {
       to: email,
       subject: 'Password Reset OTP',
       html: `
-        <div style="text-align: left; font-family: Arial, sans-serif; max-width: 600px;   border: 1px solid #eaeaea; border-radius: 10px; padding: 20px;">
+            <div style="text-align: left; font-family: Arial, sans-serif; max-width: 600px;   border: 1px solid #eaeaea; border-radius: 10px; padding: 20px;">
           
-          <h2 style="color: #4A90E2;">Welcome to Rentoora.com !</h2>
-          <p style="font-size: 16px; line-height: 1.5;">
-            We're glad to have you with us! To reset your password, please use the OTP below.
-          </p>
-          <h3 style="font-weight: bold; font-size: 24px; color: #D9534F;">Your OTP: <span style="color: #4A90E2;">${otp}</span></h3>
-          <p style="font-size: 14px; color: #888;">This OTP is valid for <strong>10 minutes</strong>.</p>
-          <p>If you didn't request this, please ignore this email.</p>
-          <footer style="margin-top: 20px; font-size: 12px; color: #888;">
-            &copy; ${new Date().getFullYear()} Rentoora rental service. All rights reserved.
-          </footer>
-        </div>
+        <h2 style="color: #4A90E2;">From Rentoora,  </h2>
+        <p style="font-size: 16px; line-height: 1.5;">
+          We're glad to have you with us! <br> To reset your password, please use the OTP below.
+        </p>
+        <h3 style="font-weight: bold; font-size: 24px; color: #D9534F;">Your OTP: <span style="color: #4A90E2;">${otp}</span></h3>
+        <p style="font-size: 14px; color: #888;">This OTP is valid for <strong>10 minutes</strong>.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+        <footer style="margin-top: 20px; font-size: 12px; color: #888;">
+          &copy; ${new Date().getFullYear()} Rentoora rental service. All rights reserved.
+        </footer>
+      </div>
+
       `,
     };
 
@@ -127,6 +128,7 @@ export const verifyOTP = async (req, res) => {
 };
 
 // Reset password function
+// Reset password function
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
@@ -145,8 +147,41 @@ export const resetPassword = async (req, res) => {
     user.otpExpiry = null; // Clear OTP expiry after reset
     await user.save();
 
+    // Send a confirmation email after successful password reset
+    const mailOptions = {
+      from: process.env.EMAIL_USERNAME,
+      to: email,
+      subject: 'Password Reset Successful',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
+          <h2 style="color: #4A90E2;">Password Reset Confirmation</h2>
+          <p style="font-size: 16px; line-height: 1.5;">Hello <strong>${user.name}</strong>,</p>
+          <p style="font-size: 16px; line-height: 1.5;">
+            Your password has been successfully reset. You can now log in with your new password.
+          </p>
+          <p style="font-size: 14px; color: #888;">
+            If you did not request this password reset, please contact us immediately.
+          </p>
+          <footer style="margin-top: 20px; font-size: 12px; color: #888;">
+            &copy; ${new Date().getFullYear()} Rentoora rental service. All rights reserved.
+          </footer>
+        </div>
+      `,
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, (error) => {
+      if (error) {
+        console.error('Error sending email:', error);
+      } else {
+        console.log('Password reset confirmation email sent.');
+      }
+    });
+
+    // Respond to the client
     res.status(200).json({ message: 'Password reset successfully' });
   } catch (error) {
+    console.error('Error in resetPassword:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

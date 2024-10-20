@@ -1,0 +1,37 @@
+<div style="border: 2px solid gray; border-radius:15px; padding:5px 5px 10px 30px; font-family: Arial, sans-serif; color: #333;">
+    <h2 style="color: #4CAF50;">Dear ${post.clientId.name},</h2>
+    <p>Congratulations! Your rental post of <strong>${post.postType}</strong> has been  booked by ${user.name}.</p>
+    <p><strong>Booking Details:</strong></p>
+    <ul>
+        <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
+        <li><strong>User Name:</strong> ${user.name}</li>
+        <li><strong>Account ID:</strong> ${user.accountId}</li>
+        <li><strong>Rental Post:</strong> ${post.postType}</li>
+        <li><strong>Price:</strong> Rs.${post.price}</li>
+        <li><strong>Mode of Payment:</strong> Rs.${post.paymentMethod}</li>
+        <li><strong>Location:</strong> ${fullAddress}</li>
+
+    </ul>
+    <p>Your rental post status has been updated to "Booked".</p>
+    <p>If you have any questions, feel free to contact us.</p>
+    <p>Best regards,<br>The Rentoora Team</p>
+</div>
+
+
+
+
+
+<div style="border: 2px solid gray; border-radius:15px; padding:5px 5px 10px 30px; font-family: Arial, sans-serif; color: #333;">
+    <h2 style="color: #4CAF50;">Dear ${user.name},</h2>
+    <p>Thank you for your booking! Your rental post <strong>${post.postType}</strong> has been confirmed.</p>
+    <p><strong>Booking Details:</strong></p>
+    <ul>
+        <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
+        <li><strong>Rental Post:</strong> ${post.postType}</li>
+        <li><strong>Price:</strong> Rs.${post.price}</li>
+        <li><strong>Payment Method:</strong> ${newOrder.paymentMethod}</li>
+        <li ><strong>Location:</strong> ${fullAddress}</li>
+    </ul>
+    <p>If you have any questions, feel free to contact us.</p>
+    <p>Best regards,<br>The Rentoora Team</p>
+</div>

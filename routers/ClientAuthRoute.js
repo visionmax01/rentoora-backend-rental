@@ -14,7 +14,7 @@ Clientrouter.post('/register', upload.fields([
   { name: 'citizenshipImage', maxCount: 1 }
 ]), register);
 
-Clientrouter.post('/update-profile-pic', upload.single('profilePic'), updateProfilePic);
+Clientrouter.post('/update-profile-pic', upload.single('profilePhoto'), updateProfilePic);
 Clientrouter.post('/login', login);
 Clientrouter.post('/change-password', authenticateToken, changePassword);
 

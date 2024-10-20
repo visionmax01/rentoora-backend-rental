@@ -31,6 +31,7 @@ adminRouter.get('/total-posts', authMiddleware, adminMiddleware, getTotalPosts);
 adminRouter.get('/diaplay-posts', getTotalPosts);
 
 // Route to update client details (including citizenship image)
+
 adminRouter.put(
   '/update-client/:accountId',
   authMiddleware,               // Authorization middleware

@@ -1,11 +1,9 @@
 import User from '../models/clientadModel.js'; // Adjust the import based on your project structure
 import RentalPost from '../models/rentalPostModel.js';
 import fs from 'fs';
-import path, {dirname} from 'path';
+import path from 'path';
 import jwt from 'jsonwebtoken';
-import { fileURLToPath } from 'url';
-import cloudinary from 'cloudinary'; // Make sure to import cloudinary
-
+import cloudinary from 'cloudinary';
 
 // Controller to get all clients (users with role 0)
 export const getAllClients = async (req, res) => {
@@ -24,39 +22,48 @@ export const getAllClients = async (req, res) => {
   }
 };
 
-
-
-
-
 // Delete a client and associated images
 export const deleteClient = async (req, res) => {
   try {
     const { accountId } = req.params;
 
-    // Find the client by accountId
+    // Find and delete the client by accountId
     const client = await User.findOneAndDelete({ accountId });
 
     if (!client) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'Client not found' });
     }
 
-    // Delete associated images (profile photo and citizenship image)
-    const imagesToDelete = [client.profilePhotoPath, client.citizenshipImagePath];
+    // Array to store Cloudinary public IDs
+    const imagesToDelete = [];
 
-    imagesToDelete.forEach((imagePath) => {
-      if (imagePath) {
-        const fullPath = path.resolve(imagePath);
-        console.log(`Attempting to delete: ${fullPath}`);
+    // Extract Cloudinary public IDs from image path
+    if (client.profilePhotoPath) {
+      const profilePhotoPublicId = client.profilePhotoPath.split('/profilePhoto/')[1].split('.')[0];
+      imagesToDelete.push(`ClientDocuments/profilePhoto/${profilePhotoPublicId}`);
+    }
 
-        fs.unlink(fullPath, (err) => {
-          if (err) {
-            console.error(`Error deleting image: ${fullPath}`, err);
-          } else {
-            console.log(`Successfully deleted: ${fullPath}`);
-          }
-        });
-      }
-    });
+    if (client.citizenshipImagePath) {
+      const citizenshipImagePublicId = client.citizenshipImagePath.split('/citizenshipImage/')[1].split('.')[0];
+      imagesToDelete.push(`ClientDocuments/citizenshipImage/${citizenshipImagePublicId}`);
+    }
+
+    // Delete images from server
+    if (imagesToDelete.length > 0) {
+      console.log('Attempting to delete Cloudinary images:', imagesToDelete);
+      const deletionResults = await Promise.all(
+        imagesToDelete.map((publicId) => cloudinary.v2.uploader.destroy(publicId))
+      );
+
+      // Log results of each deletion
+      deletionResults.forEach((result, index) => {
+        if (result.result === 'ok') {
+          console.log(`Successfully deleted: ${imagesToDelete[index]}`);
+        } else {
+          console.error(`Failed to delete: ${imagesToDelete[index]}`, result);
+        }
+      });
+    }
 
     return res.status(200).json({ message: 'Client and associated images deleted successfully' });
   } catch (error) {
@@ -66,62 +73,49 @@ export const deleteClient = async (req, res) => {
 };
 
 
-
-
-
-
-
-
-// Controller function for updating client details
-
-
-
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
+// Controller function for updating client detail
 export const updateClient = async (req, res) => {
   const { accountId } = req.params;
   const { dateOfBirth, name, email, phoneNo, province, district, municipality } = req.body;
 
   try {
     // Extract token from headers
-    const token = req.headers.authorization?.split(' ')[1]; // Assuming Bearer token
-
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res.status(401).json({ message: 'No token provided.' });
     }
 
     // Verify and decode the token to get user ID
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id; // Adjust according to how your token is structured
+    const userId = decoded.id;
 
-    // Find the existing client to get the current citizenship image
+    // Find the existing client by accountId
     const existingClient = await User.findOne({ accountId });
-    
-    // If client does not exist, return an error
+
     if (!existingClient) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
-    // Get the citizenship image path if a new file was uploaded
-    const newCitizenshipImage = req.files?.citizenshipImage?.[0]?.filename; // Use the filename stored by multer
-    const citizenshipImagePath = newCitizenshipImage 
-      ? path.join('public/ClientDocuments', newCitizenshipImage) 
-      : existingClient.citizenshipImagePath; // Use new image or retain existing
+    // Check if a new citizenship is uploaded
+    const newCitizenshipImage = req.files?.citizenshipImage?.[0]?.path; 
 
-    // If a new image was uploaded, delete the old image
-    if (newCitizenshipImage) {
-      const oldImagePath = path.join(__dirname, existingClient.citizenshipImagePath); // Correct path here
-      console.log("Attempting to delete file at:", oldImagePath); // Log the file path
+    // Delete the old citizenship image from server 
+    if (newCitizenshipImage && existingClient.citizenshipImagePath) {
+      const publicId = existingClient.citizenshipImagePath.split('/citizenshipImage/')[1].split('.')[0];
+      const result = await cloudinary.v2.uploader.destroy(`ClientDocuments/citizenshipImage/${publicId}`);
 
-      if (fs.existsSync(oldImagePath)) {
-        console.log("Deleting old citizenship image:", oldImagePath);
-        fs.unlinkSync(oldImagePath); // Synchronously delete the old image
+      console.log("Cloudinary deletion result:", result);
+
+
+      if (result.result === 'ok') {
+        console.log("Old citizenship image deleted successfully from Cloudinary.");
       } else {
-        console.log("File not found, skipping deletion:", oldImagePath);
+        console.error("Failed to delete old citizenship image from Cloudinary:", result.result);
       }
     }
+
+    // Update citizenship image path or keep the existing one if no new image was uploaded
+    const citizenshipImagePath = newCitizenshipImage || existingClient.citizenshipImagePath;
 
     // Update client details
     existingClient.dateOfBirth = dateOfBirth;
@@ -131,9 +125,9 @@ export const updateClient = async (req, res) => {
     existingClient.province = province;
     existingClient.district = district;
     existingClient.municipality = municipality;
-    existingClient.citizenshipImagePath = citizenshipImagePath; // Update the citizenshipImagePath
+    existingClient.citizenshipImagePath = citizenshipImagePath;
 
-    await existingClient.save(); // Save the updated client
+    await existingClient.save(); 
 
     res.status(200).json({ message: "Client updated successfully", updatedClient: existingClient });
   } catch (error) {
@@ -144,18 +138,14 @@ export const updateClient = async (req, res) => {
 
 
 
-
-
-
 // Controller to get all client posts
-
 export const getAllClientPosts = async (req, res) => {
   try {
     // Fetch all client posts and populate the clientId with user details
     const posts = await RentalPost.find()
       .populate({
-        path: 'clientId', // This should match the field name in ClientPost schema
-        select: 'name accountId', // Specify which fields to return from User
+        path: 'clientId', 
+        select: 'name accountId', 
       })
       .select('postType price description images createdAt clientId') 
       .exec();
@@ -168,15 +158,7 @@ export const getAllClientPosts = async (req, res) => {
 };
 
 
-
-
-
-  
-
-
-
-
-// Update a client post (Admin only)
+// Update a client post 
 export const updateClientPostByAdmin = async (req, res) => {
   try {
     const { type, description, price } = req.body;
@@ -222,8 +204,6 @@ export const updateClientPostByAdmin = async (req, res) => {
 };
 
 
-
-
 // Delete a client post (Admin only)
 export const deleteClientPostByAdmin = async (req, res) => {
   try {
@@ -258,10 +238,6 @@ export const deleteClientPostByAdmin = async (req, res) => {
 };
 
 
-
-
-
-
 // Function to get total number of posts
 export const getTotalPosts = async (req, res) => {
   try {
@@ -272,3 +248,5 @@ export const getTotalPosts = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+

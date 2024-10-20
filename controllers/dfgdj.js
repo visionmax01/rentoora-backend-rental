@@ -1,104 +1,70 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/clientadModel.js';
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
 import cloudinary from 'cloudinary';
-dotenv.config();
+import User from '../models/UserModel';
 
-// ... (other functions and configurations remain the same)
+export const updateClient = async (req, res) => {
+  const { accountId } = req.params;
+  const { dateOfBirth, name, email, phoneNo, province, district, municipality } = req.body;
 
-export const register = async (req, res) => {
   try {
-    const { name, email, role, phoneNo, dateOfBirth, province, district, municipality } = req.body;
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+    // Extract token from headers
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided.' });
     }
 
-    const randomPassword = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(randomPassword, 12);
-    const firstName = name.charAt(0).toUpperCase();
-    const accountId = generateAccountId(firstName);
+    // Verify and decode the token to get user ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
 
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-      accountId,
-      role: role === 1 ? 1 : 0,
-      phoneNo,
-      dateOfBirth,
-      province,
-      district,
-      municipality,
-    });
+    // Find the existing client by accountId
+    const existingClient = await User.findOne({ accountId });
 
-    // Save the user first, without file paths
-    await newUser.save();
-
-    // Now that the user is saved, handle file uploads
-    let profilePhotoPath = null;
-    let citizenshipImagePath = null;
-
-    if (req.files['profilePhoto']) {
-      const profilePhotoResult = await cloudinary.v2.uploader.upload(req.files['profilePhoto'][0].path, {
-        folder: 'ClientDocuments/profilePhoto',
-      });
-      profilePhotoPath = profilePhotoResult.secure_url;
+    if (!existingClient) {
+      return res.status(404).json({ message: 'Client not found' });
     }
 
-    if (req.files['citizenshipImage']) {
-      const citizenshipImageResult = await cloudinary.v2.uploader.upload(req.files['citizenshipImage'][0].path, {
-        folder: 'ClientDocuments/citizenshipImage',
-      });
-      citizenshipImagePath = citizenshipImageResult.secure_url;
-    }
+    // Check if a new citizenship image was uploaded
+    const newCitizenshipImage = req.files?.citizenshipImage?.[0]?.path;
 
-    // Update user with file paths if they were uploaded
-    if (profilePhotoPath || citizenshipImagePath) {
-      newUser.profilePhotoPath = profilePhotoPath;
-      newUser.citizenshipImagePath = citizenshipImagePath;
-      await newUser.save();
-    }
+    if (newCitizenshipImage && existingClient.citizenshipImagePath) {
+      // Extract the public ID from the current citizenship image path
+      const publicId = existingClient.citizenshipImagePath.split('/citizenshipImage/')[1].split('.')[0];
+      
+      console.log("Attempting to delete old citizenship image with public ID:", publicId);
 
-    // Clean up temporary files
-    if (req.files['profilePhoto']) {
-      fs.unlinkSync(req.files['profilePhoto'][0].path);
-    }
-    if (req.files['citizenshipImage']) {
-      fs.unlinkSync(req.files['citizenshipImage'][0].path);
-    }
+      // Delete the old image from Cloudinary
+      const result = await cloudinary.v2.uploader.destroy(`ClientDocuments/citizenshipImage/${publicId}`);
 
-    // Send welcome email
-    const mailOptions = {
-      from: process.env.EMAIL_USERNAME,
-      to: email,
-      subject: 'Welcome to Rentoora.com - Your Account Details',
-      text: `Hello ${name},\n\nWelcome to Rentoora.com! Your account has been created successfully.\n\nYour Account ID: ${accountId}\nYour Password: ${randomPassword}\n\nPlease change your password after your first login.\n\nThank you for joining us!\n\nBest regards,\nThe Rentoora Team`,
-    };
+      // Log the response from Cloudinary to see if the deletion was successful
+      console.log("Cloudinary deletion result:", result);
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
+      // Check Cloudinary response to see if the image was successfully deleted
+      if (result.result === 'ok') {
+        console.log("Old citizenship image deleted successfully from Cloudinary.");
       } else {
-        console.log('Email sent:', info.response);
+        console.error("Failed to delete old citizenship image from Cloudinary:", result.result);
       }
-    });
+    }
 
-    res.status(201).json({ message: 'User registered successfully, password sent to email', accountId });
+    // Update the citizenship image path or retain the old one
+    const citizenshipImagePath = newCitizenshipImage || existingClient.citizenshipImagePath;
+
+    // Update client details
+    existingClient.dateOfBirth = dateOfBirth;
+    existingClient.name = name;
+    existingClient.email = email;
+    existingClient.phoneNo = phoneNo;
+    existingClient.province = province;
+    existingClient.district = district;
+    existingClient.municipality = municipality;
+    existingClient.citizenshipImagePath = citizenshipImagePath;
+
+    await existingClient.save();
+
+    res.status(200).json({ message: "Client updated successfully", updatedClient: existingClient });
   } catch (error) {
-    // If an error occurs, clean up any uploaded files
-    if (req.files['profilePhoto']) {
-      fs.unlinkSync(req.files['profilePhoto'][0].path);
-    }
-    if (req.files['citizenshipImage']) {
-      fs.unlinkSync(req.files['citizenshipImage'][0].path);
-    }
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Something went wrong', error: error.message });
+    console.error("Error updating client details:", error);
+    res.status(500).json({ message: "Error updating client details", error: error.message });
   }
 };
-
-// ... (other functions remain the same)
