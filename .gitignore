@@ -1,5 +1,7 @@
 # Ignore the .env file (contains sensitive environment variables)
-.env
+.env 
 
 # Ignore the node_modules directory (contains installed dependencies)
 node_modules/
+
+.env

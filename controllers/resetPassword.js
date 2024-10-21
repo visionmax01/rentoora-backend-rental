@@ -52,19 +52,21 @@ export const sendOTP = async (req, res) => {
       to: email,
       subject: 'Password Reset OTP',
       html: `
-            <div style="text-align: left; font-family: Arial, sans-serif; max-width: 600px;   border: 1px solid #eaeaea; border-radius: 10px; padding: 20px;">
+             <div style="text-align: left; font-family: Arial, sans-serif; max-width: 600px;   border: 1px solid #eaeaea; border-radius: 10px; padding: 20px;">
           
-        <h2 style="color: #4A90E2;">From Rentoora,  </h2>
-        <p style="font-size: 16px; line-height: 1.5;">
-          We're glad to have you with us! <br> To reset your password, please use the OTP below.
-        </p>
-        <h3 style="font-weight: bold; font-size: 24px; color: #D9534F;">Your OTP: <span style="color: #4A90E2;">${otp}</span></h3>
-        <p style="font-size: 14px; color: #888;">This OTP is valid for <strong>10 minutes</strong>.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-        <footer style="margin-top: 20px; font-size: 12px; color: #888;">
-          &copy; ${new Date().getFullYear()} Rentoora rental service. All rights reserved.
-        </footer>
-      </div>
+    <h2 style="color: #4A90E2;">From Rentoora,  </h2>
+    <p style="font-size: 16px; line-height: 1.5;">
+      We're glad to have you with us! <br> To reset your password, please use the OTP below.
+    </p>
+    <div style="padding: 16px; background-color: #f4daed; border-left: 4px solid #4f46e5; margin-bottom: 16px;">
+    <h3 style="font-weight: bold; font-size: 24px; color: #D9534F;">Your OTP: <span style="color: #4A90E2;">${otp}</span></h3>
+    <p style="font-size: 14px; color: #888;">This OTP is valid for <strong>10 minutes</strong>.</p>
+    </div>
+    <p>If you didn't request this, please ignore this email.</p>
+    <footer style="margin-top: 20px; font-size: 12px; color: #888;">
+      &copy; ${new Date().getFullYear()} Rentoora rental service. All rights reserved.
+    </footer>
+  </div>
 
       `,
     };
