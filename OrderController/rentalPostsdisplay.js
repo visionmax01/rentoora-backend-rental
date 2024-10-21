@@ -95,31 +95,31 @@ export const createOrder = async (req, res) => {
             to: post.clientId.email,
             subject: 'Your Rental Post Has Been Booked - Rentoora',
             html: `
-    <div style="font-family: Arial, sans-serif; color: #333;  padding: 20px;">
-  <div style="max-width: 600px;  background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
-
-  <h2 style="color: #4CAF50;">Dear ${post.clientId.name},</h2>
-  <p>Congratulations! Your rental post of <strong>${post.postType}</strong> has been  booked by ${user.name}.</p>
-  <p><strong>Booking Details:</strong></p>
-  <div style="padding: 16px  0; background-color: #f4daed; border-left: 4px solid #4f46e5; margin-bottom: 16px;">
-  <ul style="font-size: 14px; list-style: none; color: #4b5563; display:flex; flex-direction:column; gap:15px;">
-      <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
-      <li><strong>Booked By:</strong> ${user.name}</li>
-      <li><strong>Account ID:</strong> ${user.accountId}</li>
-      <li><strong>Rental Post:</strong> ${post.postType}</li>
-      <li><strong>Price:</strong> Rs.${post.price}</li>
-      <li><strong>Mode of Payment:</strong> ${newOrder.paymentMethod}</li>
-      <li><strong>Location:</strong> ${fullAddress}</li>
-
-  </ul>
+   <div style="font-family: Arial, sans-serif; color: #333;  padding: 20px;">
+    <div style="max-width: 600px;  background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+  
+    <h2 style="color: #4CAF50;">Dear ${post.clientId.name},</h2>
+    <p>Congratulations! Your rental post of <strong>${post.postType}</strong> has   booked by ${user.name} Successfull.</p>
+    <p><strong>Booking Details:</strong></p>
+    <div style="padding: 16px  0; background-color: #f4daed; border-left: 4px solid #4f46e5; margin-bottom: 16px;">
+    <ul style="font-size: 14px; list-style: none; color: #4b5563; ">
+        <li><strong>Booking ID:</strong> ${newOrder.orderId}</li><br>
+        <li><strong>Booked By:</strong> ${user.name}</li><br>
+        <li><strong>Account ID:</strong> ${user.accountId}</li><br>
+        <li><strong>Rental Post:</strong> ${post.postType}</li><br>
+        <li><strong>Price:</strong> Rs.${post.price}</li><br>
+        <li><strong>Mode of Payment:</strong> ${newOrder.paymentMethod}</li><br>
+        <li><strong>Location:</strong> ${fullAddress}</li>
+  
+    </ul>
+    </div>
+    <p>Your rental post status has been updated to "Booked".</p>
+    <p>If you have any questions, feel free to contact us.</p>
+    <div>Best regards,<br>
+    <img src="https://rentoora.bhishansah.com.np/assets/Main_logo-CEv0uvA6.png" style="width:150px; height:50px; margin-left: -7px;" alt="" srcset=""><br>
+    The Rentoora Team</div>
   </div>
-  <p>Your rental post status has been updated to "Booked".</p>
-  <p>If you have any questions, feel free to contact us.</p>
-  <div>Best regards,<br>
-  <img src="https://rentoora.bhishansah.com.np/assets/Main_logo-CEv0uvA6.png" style="width:150px; height:50px; margin-left: -7px;" alt="" srcset=""><br>
-  The Rentoora Team</div>
-</div>
-</div>
+  </div>
             `,
         };
 
@@ -132,7 +132,7 @@ export const createOrder = async (req, res) => {
 <div style="font-family: Arial, sans-serif; color: #333;  padding: 20px;">
     <div style="max-width: 600px;  background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
     <h2 style="color: #4CAF50;">Dear ${user.name},</h2>
-    <p>Thank you for your booking! Your rental post <strong>${post.postType}</strong> has been confirmed.</p>
+    <p>Thank you for your booking! Your  <strong>${post.postType}</strong> has Successfully Booked.</p>
     <p><strong>Booking Details:</strong></p>
     <div style="padding: 16px 0; background-color: #f4daed; border-left: 4px solid #4f46e5; margin-bottom: 16px;">
     <ul style="font-size: 14px; list-style: none;color: #4b5563;">
