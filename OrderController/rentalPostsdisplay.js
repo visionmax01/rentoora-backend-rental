@@ -95,23 +95,30 @@ export const createOrder = async (req, res) => {
             to: post.clientId.email,
             subject: 'Your Rental Post Has Been Booked - Rentoora',
             html: `
-     <div style="border: 2px solid gray; border-radius:15px; padding:5px 5px 10px 30px; font-family: Arial, sans-serif; color: #333;">
-    <h2 style="color: #4CAF50;">Dear ${post.clientId.name},</h2>
-    <p>Congratulations! Your rental post of <strong>${post.postType}</strong> has been  booked by ${user.name}.</p>
-    <p><strong>Booking Details:</strong></p>
-    <ul>
-        <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
-        <li><strong>User Name:</strong> ${user.name}</li>
-        <li><strong>Account ID:</strong> ${user.accountId}</li>
-        <li><strong>Rental Post:</strong> ${post.postType}</li>
-        <li><strong>Price:</strong> Rs.${post.price}</li>
-        <li><strong>Mode of Payment:</strong> ${newOrder.paymentMethod}</li>
-        <li><strong>Location:</strong> ${fullAddress}</li>
+    <div style="font-family: Arial, sans-serif; color: #333;  padding: 20px;">
+  <div style="max-width: 600px;  background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
 
-    </ul>
-    <p>Your rental post status has been updated to "Booked".</p>
-    <p>If you have any questions, feel free to contact us.</p>
-    <p>Best regards,<br>The Rentoora Team</p>
+  <h2 style="color: #4CAF50;">Dear ${post.clientId.name},</h2>
+  <p>Congratulations! Your rental post of <strong>${post.postType}</strong> has been  booked by ${user.name}.</p>
+  <p><strong>Booking Details:</strong></p>
+  <div style="padding: 16px  0; background-color: #f4daed; border-left: 4px solid #4f46e5; margin-bottom: 16px;">
+  <ul style="font-size: 14px; list-style: none; color: #4b5563; display:flex; flex-direction:column; gap:15px;">
+      <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
+      <li><strong>Booked By:</strong> ${user.name}</li>
+      <li><strong>Account ID:</strong> ${user.accountId}</li>
+      <li><strong>Rental Post:</strong> ${post.postType}</li>
+      <li><strong>Price:</strong> Rs.${post.price}</li>
+      <li><strong>Mode of Payment:</strong> ${newOrder.paymentMethod}</li>
+      <li><strong>Location:</strong> ${fullAddress}</li>
+
+  </ul>
+  </div>
+  <p>Your rental post status has been updated to "Booked".</p>
+  <p>If you have any questions, feel free to contact us.</p>
+  <div>Best regards,<br>
+  <img src="https://rentoora.bhishansah.com.np/assets/Main_logo-CEv0uvA6.png" style="width:150px; height:50px; margin-left: -7px;" alt="" srcset=""><br>
+  The Rentoora Team</div>
+</div>
 </div>
             `,
         };
@@ -122,21 +129,25 @@ export const createOrder = async (req, res) => {
             to: user.email,
             subject: 'Booking Confirmation - Rentoora',
             html: `
-          
-
-<div style="border: 2px solid gray; border-radius:15px; padding:5px 5px 10px 30px; font-family: Arial, sans-serif; color: #333;">
-    <h2 style="color: #4CAF50;">Dear ${user.name},</h2>
-    <p>Thank you for your booking! Your rental post <strong>${post.postType}</strong> has been confirmed.</p>
-    <p><strong>Booking Details:</strong></p>
-    <ul>
-        <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
-        <li><strong>Rental Post:</strong> ${post.postType}</li>
-        <li><strong>Price:</strong> Rs.${post.price}</li>
-        <li><strong>Payment Method:</strong> ${newOrder.paymentMethod}</li>
-        <li ><strong>Location:</strong> ${fullAddress}</li>
-    </ul>
-    <p>If you have any questions, feel free to contact us.</p>
-    <p>Best regards,<br>The Rentoora Team</p>
+<div style="font-family: Arial, sans-serif; color: #333;  padding: 20px;">
+  <div style="max-width: 600px;  background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+  <h2 style="color: #4CAF50;">Dear ${user.name},</h2>
+  <p>Thank you for your booking! Your rental post <strong>${post.postType}</strong> has been confirmed.</p>
+  <p><strong>Booking Details:</strong></p>
+  <div style="padding: 16px 0; background-color: #f4daed; border-left: 4px solid #4f46e5; margin-bottom: 16px;">
+  <ul style="font-size: 14px; list-style: none;color: #4b5563; display:flex; flex-direction:column; gap:15px;">
+      <li><strong>Booking ID:</strong> ${newOrder.orderId}</li>
+      <li><strong>Rental Post:</strong> ${post.postType}</li>
+      <li><strong>Price:</strong> Rs.${post.price}</li>
+      <li><strong>Payment Method:</strong> ${newOrder.paymentMethod}</li>
+      <li ><strong>Location:</strong> ${fullAddress}</li>
+  </ul>
+  </div>
+  <p>If you have any questions, feel free to contact us.</p>
+  <div>Best regards,<br>
+  <img src="./img/Main_logo.png" style="width:150px; height:50px; margin-left: -7px;"  alt="" srcset="">
+  <br>The Rentoora Team</div>
+</div>
 </div>
             `,
         };
@@ -203,17 +214,25 @@ export const cancelOrder = async (req, res) => {
             to: ownerEmail,
             subject: 'Order Cancellation Notification - Rentoora',
             html: `
-            <div style="font-family: Arial, sans-serif; color: #333;">
-    <h2>Dear ${ownerName}, </h2>
-    <p>Your  rental post <strong>"${order.postId.postType}"</strong> has  canceled. Below are the details:</p>
-    <ul>
-        <li><strong>Order ID:</strong> ${order.orderId}</li>
-        <li><strong>Canceled By:</strong> ${cancelingUser.name}</li>
-        <li><strong>Canceled On:</strong> ${new Date(order.createdAt).toLocaleString()}</li>
-    </ul>
-    <p>If you have any questions or concerns, please contact us.</p>
-    <p>Best regards,<br>The Rentoora Team</p>
+   <div style="font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+    <h2 style="color: #2c3e50; font-size: 24px;">Dear ${ownerName},</h2>
+    <p style="font-size: 16px; line-height: 1.6;">Your rental post <strong style="color: #e74c3c;">"${order.postId.postType}"</strong> has been canceled. Below are the details:</p>
+
+    <div style="padding: 16px; background-color: #f4daed; border-left: 4px solid #4f46e5; margin-bottom: 16px;">
+      <p style="font-size: 14px; color: #4b5563;"><strong>Order ID:</strong> ${order.orderId}</p>
+      <p style="font-size: 14px; color: #4b5563;"><strong>Canceled By:</strong> ${cancelingUser.name}</p>
+      <p style="font-size: 14px; color: #4b5563;"><strong>Canceled On:</strong> ${new Date(order.updatedAt).toLocaleString()}</p>
+    </div>
+    <p style="font-size: 16px; line-height: 1.6;">If you have any questions or concerns, please contact us.</p>
+    <p style="font-size: 16px; line-height: 1.6;">Best regards,<br>
+    <img src="https://rentoora.bhishansah.com.np/assets/Main_logo-CEv0uvA6.png" style="width:150px; height:50px; margin-left:-7px;" alt=""><br>
+    <strong style="color: #2980b9;">The Rentoora Team</strong></p>
+  
+  </div>
 </div>
+
+
             `,
         };
 
@@ -223,17 +242,26 @@ export const cancelOrder = async (req, res) => {
             to: orderCreatorEmail, // Email of the user who made the order
             subject: 'Your Order Has Been Canceled - Rentoora',
             html: `
-       <div style="font-family: Arial, sans-serif; color: #333;">
-    <h2>Dear ${orderCreator.name},</h2>
-    <p>We regret to inform you that the order for your rental post <strong>${order.postId.postType}</strong> has been canceled by ${cancelingUser.name}. Below are the details:</p>
-    <ul>
-        <li><strong>Order ID:</strong> ${order.orderId}</li>
-        <li><strong>Rental Post:</strong> ${order.postId.postType}</li>
-        <li><strong>Canceled By:</strong> ${cancelingUser.name}</li>
-        <li><strong>Canceled On:</strong> ${new Date(order.createdAt).toLocaleString()}</li>
-    </ul>
-    <p>If you have any questions or need further assistance, please feel free to contact us.</p>
-    <p>Best regards,<br>The Rentoora Team</p>
+<div style="font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+    <h2 style="color: #2c3e50; font-size: 24px;">Dear ${orderCreator.name},</h2>
+    <p style="font-size: 16px; line-height: 1.6;">We regret to inform you that the order for your rental post <strong style="color: #e74c3c;">${order.postId.postType}</strong> has been canceled by ${cancelingUser.name}. Below are the details:</p>
+
+    <div style="padding: 16px; background-color: #f4daed; border-left: 4px solid #4f46e5; margin-bottom: 16px;">
+      <p style="font-size: 14px; color: #4b5563; display:flex; flex-direction:column; gap:15px;">
+        <span><strong>Order ID:</strong> ${order.orderId}</span>
+        <span><strong>Rental Post:</strong> ${order.postId.postType}</span>
+        <span><strong>Canceled By:</strong> <span style="color: #e74c3c;">${cancelingUser.name}</span></span>
+        <span><strong>Canceled On:</strong> ${new Date(order.updatedAt).toLocaleString()}</span>
+      </p>
+    </div>
+
+    <p style="font-size: 16px; line-height: 1.6;">If you have any questions or need further assistance, please feel free to contact us.</p>
+
+    <p style="font-size: 16px; line-height: 1.6;">Best regards,<br>
+    <img src="https://rentoora.bhishansah.com.np/assets/Main_logo-CEv0uvA6.png" style="width:150px; height:50px; margin-left: -7px;" alt="" srcset=""><br>
+    <strong style="color: #2980b9;">The Rentoora Team</strong></p>
+  </div>
 </div>
             `,
         };
