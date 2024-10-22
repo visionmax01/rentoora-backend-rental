@@ -56,7 +56,8 @@ export const sendFeedbackEmails = async (req, res) => {
               </p>
               <p>Your feedback is valuable for us!</p>
               <p style="font-size: 16px; margin-bottom: 16px;">
-                <a href="https://rentoora.bhishansah.com.np/feadBackform" style="color: #4f46e5; text-decoration: underline;">Feedback Form</a>
+                <a href="https://rentoora.bhishansah.com.np/feadBackform" style="color: #4f46e5; margin-bottom:8px; text-decoration: underline;">Feedback Form</a>
+                <p>Ignore this mail if you already submitted !</P>
               </p>
               <p style="font-size: 14px; color: #1f2937; margin-top: 16px;">
                 Best regards,<br>
