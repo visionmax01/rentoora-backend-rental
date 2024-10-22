@@ -1,6 +1,5 @@
 import User from '../models/clientadModel.js';
 
-
 export const getClientCount = async (req, res) => {
   try {
     const count = await User.countDocuments({ role: 0 });

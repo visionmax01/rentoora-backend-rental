@@ -9,6 +9,7 @@ import {
   getTotalPosts 
 } from '../addminController/adminCltController.js'; // Adjust import path
 
+
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import adminMiddleware from '../middleware/adminMiddleware.js';
 import upload from '../middleware/uploadClientDocuments.js'; // Corrected import path for the upload middleware
@@ -41,6 +42,5 @@ adminRouter.put(
   ]), 
   updateClient                   // Controller function for updating client details
 );
-
 
 export default adminRouter;
