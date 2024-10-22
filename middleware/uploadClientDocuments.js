@@ -53,7 +53,7 @@ const uploadClientDoc = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 1 * 1024 * 1024 // 1MB limit for file size
+    fileSize: 2 * 1024 * 1024 // 2MB limit for file size
   }
 });
 

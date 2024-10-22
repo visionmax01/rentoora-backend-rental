@@ -10,8 +10,8 @@ import adminclientrouter from './routers/adminClientRoute.js';
 import txtrouter from './routers/supportTicketRoute.js';
 import adminRouter from './adminRoutes/adminRouter.js';
 import orderRouter from './orderRoutes/rentalOrderRoutes.js'
-import { fileURLToPath } from 'url';
 import paymentRouter from "./orderRoutes/paymentRoutes.js"
+import feadbackrouter from './routers/feedbackRoutes.js'
 
 dotenv.config();
 
@@ -52,5 +52,6 @@ app.use('/txt', txtrouter);
 app.use('/admin', adminRouter);
 app.use('/order', orderRouter);
 app.use('/payment', paymentRouter);
+app.use('/feadback', feadbackrouter);
 
 export default app;

@@ -1,4 +1,3 @@
-// controllers/paymentController.js
 import axios from 'axios';
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
@@ -7,26 +6,24 @@ export const verifyKhaltiPayment = async (req, res) => {
   const { token, amount, postId, userId } = req.body;
 
   try {
-    // Verify Khalti payment using Khalti secret key
     const response = await axios.post(
-      'https://khalti.com/api/v2/payment/verify/',
+      'https://khalti.com/api/v2/payment/verify/',  // Use this for live mode as well
       {
         token: token,
         amount: amount,
       },
       {
         headers: {
-          Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`,
+          Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`, // Use your live secret key here
         },
       }
     );
 
     if (response.data && response.data.idx) {
-      // Payment verified successfully, create payment record
+      // Payment verified successfully
       const payment = new Payment({
         userId,
         postId,
-        orderId: req.body.orderId, // Pass the orderId from frontend
         paymentMethod: 'Wallet',
         paymentStatus: 'Completed',
         paymentDetails: response.data,
